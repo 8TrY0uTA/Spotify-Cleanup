@@ -183,7 +183,11 @@ def clean_playlist():
         return
 
     print(f"{len(broken)} kaputte Tracks erkannt.")
+print("SCRIPT STARTET")
 
+if _name_== "__main__":
+if _name__== "__main__":
+print("MAIN BLOCK WIRD AUSGEFÜHRT")
     if DRY_RUN:
         print("Dry-Run aktiv – Tracks werden nicht gelöscht.")
         for i, uri in enumerate(broken, 1):
