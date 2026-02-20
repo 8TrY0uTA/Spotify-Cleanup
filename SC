@@ -35,7 +35,11 @@ if len(broken) > len(tracks) * 0.3:
 DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
 env:
   DRY_RUN: "false"
+<DRY_RUN="true">
+
+run: python3 clean_playlist.py
+
 
 
         run: python clean_playlist.py
-
+.github/workflows/cleanup.yml
