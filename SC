@@ -72,7 +72,7 @@ def get_all_tracks(access_token):
         tracks.extend(data["items"])
         url = data["next"]
     return tracks
-
+print ("Starte Sportify Playlist Cleanup...")
 def remove_tracks(access_token, uris):
     headers = {"Authorization": f"Bearer {access_token}"}
     url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
@@ -90,7 +90,8 @@ def clean_playlist(dry_run=True):
         if track is None or not track.get("is_playable", True):
             if track and track.get("uri"):
                 broken.append(track["uri"])
-
+print(f"{len(tracks)} Tracks in Playlist gefunden.")
+print(f"{len(broken)} kaputte Tracks erkannt.")
     if broken:
         if dry_run:
             st.warning(f"Dry-Run: {len(broken)} Tracks würden entfernt.")
@@ -111,3 +112,94 @@ streamlit run app . py
 
 .github/workflows/cleanup.yml
 
+import os
+import requests
+
+# -------------------
+# Konfiguration über Umgebungsvariablen (lokal oder GitHub Secrets)
+# -------------------
+CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
+PLAYLIST_ID = os.getenv("PLAYLIST_ID")
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"  # true/false
+
+if not all([CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, PLAYLIST_ID]):
+    raise ValueError("Bitte alle Spotify Secrets setzen: CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, PLAYLIST_ID")
+
+print("Starte Spotify Playlist Cleanup...")
+print(f"Dry-Run: {DRY_RUN}")
+
+# -------------------
+# Funktionen
+# -------------------
+def get_access_token():
+    response = requests.post(
+        "https://accounts.spotify.com/api/token",
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": REFRESH_TOKEN
+        },
+        auth=(CLIENT_ID, CLIENT_SECRET)
+    )
+    response.raise_for_status()
+    token = response.json()["access_token"]
+    print("Access Token erfolgreich abgerufen.")
+    return token
+
+def get_all_tracks(access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
+    tracks = []
+    while url:
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        tracks.extend(data["items"])
+        url = data["next"]
+    print(f"{len(tracks)} Tracks in Playlist gefunden.")
+    return tracks
+
+def remove_tracks(access_token, uris):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
+    for i in range(0, len(uris), 100):
+        batch = uris[i:i+100]
+        response = requests.delete(
+            url,
+            headers=headers,
+            json={"tracks": [{"uri": uri} for uri in batch]}
+        )
+        response.raise_for_status()
+    print(f"{len(uris)} Tracks wurden entfernt.")
+
+def clean_playlist():
+    token = get_access_token()
+    tracks = get_all_tracks(token)
+
+    broken = []
+    for item in tracks:
+        track = item["track"]
+        if track is None or not track.get("is_playable", True):
+            if track and track.get("uri"):
+                broken.append(track["uri"])
+
+    if not broken:
+        print("Keine kaputten Tracks gefunden ✅")
+        return
+
+    print(f"{len(broken)} kaputte Tracks erkannt.")
+
+    if DRY_RUN:
+        print("Dry-Run aktiv – Tracks werden nicht gelöscht.")
+        for i, uri in enumerate(broken, 1):
+            print(f"{i}: {uri}")
+    else:
+        remove_tracks(token, broken)
+        print("Kaputte Tracks entfernt ✅")
+
+# -------------------
+# Hauptprogramm
+# -------------------
+if __name__ == "__main__":
+    clean_playlist()
