@@ -26,5 +26,16 @@ jobs:
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
           PLAYLIST_ID: ${{ secrets.PLAYLIST_ID }}
+if len(broken) > 50:
+    print("Safety stop: Too many tracks marked as broken.")
+    return
+if len(broken) > len(tracks) * 0.3:
+    print("Safety stop: More than 30% would be deleted.")
+    return
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
+env:
+  DRY_RUN: "false"
+
+
         run: python clean_playlist.py
 
