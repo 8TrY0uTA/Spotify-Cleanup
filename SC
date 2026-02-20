@@ -38,8 +38,11 @@ env:
 <DRY_RUN="true">
 
 run: python3 clean_playlist.py
-
+clean_playlist.py
+requirements.txt
+.github/
 
 
         run: python clean_playlist.py
+
 .github/workflows/cleanup.yml
