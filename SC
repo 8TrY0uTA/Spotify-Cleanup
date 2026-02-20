@@ -26,6 +26,7 @@ jobs:
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
           PLAYLIST_ID: ${{ secrets.PLAYLIST_ID }}
+print("Starte Spotify Cleanup ...")
 if len(broken) > 50:
     print("Safety stop: Too many tracks marked as broken.")
     return
