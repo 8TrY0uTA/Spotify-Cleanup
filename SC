@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
-
+.github/workflows/cleanup.yml
 jobs:
   cleanup:
     runs-on: ubuntu-latest
