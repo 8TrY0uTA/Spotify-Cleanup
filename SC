@@ -115,9 +115,6 @@ streamlit run app . py
 import os
 import requests
 
-# -------------------
-# Konfiguration über Umgebungsvariablen (lokal oder GitHub Secrets)
-# -------------------
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
@@ -130,9 +127,6 @@ if not all([CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, PLAYLIST_ID]):
 print("Starte Spotify Playlist Cleanup...")
 print(f"Dry-Run: {DRY_RUN}")
 
-# -------------------
-# Funktionen
-# -------------------
 def get_access_token():
     response = requests.post(
         "https://accounts.spotify.com/api/token",
@@ -197,9 +191,5 @@ def clean_playlist():
     else:
         remove_tracks(token, broken)
         print("Kaputte Tracks entfernt ✅")
-
-# -------------------
-# Hauptprogramm
-# -------------------
 if __name__ == "__main__":
     clean_playlist()
