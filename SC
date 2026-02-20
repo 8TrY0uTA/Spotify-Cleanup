@@ -103,10 +103,9 @@ def clean_playlist(dry_run=True):
 st.title("Spotify Playlist Cleanup")
 
 dry_run = st.checkbox("Dry-Run aktivieren", value=True)
-
 if st.button("Playlist prüfen / bereinigen"):
     clean_playlist(dry_run=dry_run)
-
+streamlit run app . py
         run: python clean_playlist.py
 
 .github/workflows/cleanup.yml
