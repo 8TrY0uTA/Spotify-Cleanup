@@ -41,7 +41,71 @@ run: python main/clean_playlist.py
 clean_playlist.py
 requirements.txt
 .github/
+import os
+import streamlit as st
+import requests
 
+# --- Spotify Setup ---
+CLIENT_ID = st.secrets.get("SPOTIFY_CLIENT_ID")
+CLIENT_SECRET = st.secrets.get("SPOTIFY_CLIENT_SECRET")
+REFRESH_TOKEN = st.secrets.get("SPOTIFY_REFRESH_TOKEN")
+PLAYLIST_ID = st.secrets.get("PLAYLIST_ID")
+
+def get_access_token():
+    response = requests.post(
+        "https://accounts.spotify.com/api/token",
+        data={"grant_type": "refresh_token", "refresh_token": REFRESH_TOKEN},
+        auth=(CLIENT_ID, CLIENT_SECRET)
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
+
+def get_all_tracks(access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
+    tracks = []
+    while url:
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        tracks.extend(data["items"])
+        url = data["next"]
+    return tracks
+
+def remove_tracks(access_token, uris):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"https://api.spotify.com/v1/playlists/{PLAYLIST_ID}/tracks"
+    for i in range(0, len(uris), 100):
+        batch = uris[i:i+100]
+        requests.delete(url, headers=headers, json={"tracks": [{"uri": uri} for uri in batch]})
+
+def clean_playlist(dry_run=True):
+    token = get_access_token()
+    tracks = get_all_tracks(token)
+
+    broken = []
+    for item in tracks:
+        track = item["track"]
+        if track is None or not track.get("is_playable", True):
+            if track and track.get("uri"):
+                broken.append(track["uri"])
+
+    if broken:
+        if dry_run:
+            st.warning(f"Dry-Run: {len(broken)} Tracks würden entfernt.")
+        else:
+            remove_tracks(token, broken)
+            st.success(f"{len(broken)} Tracks entfernt.")
+    else:
+        st.info("Keine kaputten Tracks gefunden.")
+
+# --- Streamlit UI ---
+st.title("Spotify Playlist Cleanup")
+
+dry_run = st.checkbox("Dry-Run aktivieren", value=True)
+
+if st.button("Playlist prüfen / bereinigen"):
+    clean_playlist(dry_run=dry_run)
 
         run: python clean_playlist.py
 
